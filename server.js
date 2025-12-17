@@ -54,8 +54,8 @@ app.post("/api/clanker-reply", async (req, res) => {
   }
 });
 
-// SPA fallback (Express 5 safe)
-app.get("/*", (req, res) => {
+// Catch-all route for SPA fallback
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, frontendFolder, "index.html"));
 });
 
