@@ -28,26 +28,34 @@ function App() {
     setInput("");
 
     let replyText = "Clanker is silent."; // default fallback
+try {
+  const res = await fetch("/api/clanker-reply", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      clankerId: CLANKER.id,
+      userText: text,
+    }),
+  });
 
-    try {
-      const res = await fetch("http://localhost:3001/api/clanker-reply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clankerId: CLANKER.id, userText: text }),
-      });
+  if (!res.ok) {
+    // If backend returns 4xx/5xx
+    throw new Error(`Server responded with ${res.status}`);
+  }
 
-      const autoReply = await res.json();
-      console.log("Backend reply:", autoReply);
+  const autoReply = await res.json();
+  console.log("Backend reply:", autoReply);
 
-      if (res.ok && autoReply && typeof autoReply.reply === "string") {
-        replyText = autoReply.reply;
-      } else {
-        replyText = "Clanker received no reply.";
-      }
-    } catch (err) {
-      console.error("Fetch failed:", err);
-      replyText = "Backend error — clanker is silent.";
-    }
+  if (autoReply && typeof autoReply.reply === "string") {
+    replyText = autoReply.reply;
+  } else {
+    replyText = "Clanker received no reply.";
+  }
+} catch (err) {
+  console.error("Fetch failed:", err);
+  replyText = "Backend error — clanker is silent.";
+}
+
 
     const replyMsg = {
       id: crypto.randomUUID(),
