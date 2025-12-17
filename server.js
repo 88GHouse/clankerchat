@@ -5,25 +5,22 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Load environment variables
 dotenv.config();
 
-// __dirname replacement in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
 app.use(express.json());
 app.use(cors());
 
-// Serve React build (use "build" for CRA, "dist" for Vite)
-const frontendFolder = "dist"; // or "dist"
+// Serve Vite build output
+const frontendFolder = "dist";
 app.use(express.static(path.join(__dirname, frontendFolder)));
 
-// API route for Clanker replies
+// API route
 app.post("/api/clanker-reply", async (req, res) => {
   const { clankerId, userText } = req.body;
   const persona = `You are ${clankerId}, a factual assistant. Avoid sound effects and stay focused on clear answers.`;
@@ -45,15 +42,10 @@ app.post("/api/clanker-reply", async (req, res) => {
     });
 
     const data = await groqRes.json();
-
-    let reply = "No reply from Groq.";
-    if (data?.choices?.[0]?.message?.content) {
-      reply = data.choices[0].message.content;
-    } else if (data?.choices?.[0]?.text) {
-      reply = data.choices[0].text;
-    } else if (data?.error?.message) {
-      reply = `Groq error: ${data.error.message}`;
-    }
+    let reply = data?.choices?.[0]?.message?.content
+      || data?.choices?.[0]?.text
+      || data?.error?.message
+      || "No reply from Groq.";
 
     res.json({ reply });
   } catch (err) {
@@ -62,12 +54,11 @@ app.post("/api/clanker-reply", async (req, res) => {
   }
 });
 
-// Fallback for React Router (SPA)
+// SPA fallback
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, frontendFolder, "index.html"));
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`Clanker rattling on port ${PORT}`);
 });
