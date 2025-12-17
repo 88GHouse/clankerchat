@@ -17,10 +17,11 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(express.json());
-app.use(cors()); // allow all origins in production
+app.use(cors());
 
-// Serve React build (adjust path if your dist folder is elsewhere)
-app.use(express.static(path.join(__dirname, "dist")));
+// Serve React build (use "build" for CRA, "dist" for Vite)
+const frontendFolder = "dist"; // or "dist"
+app.use(express.static(path.join(__dirname, frontendFolder)));
 
 // API route for Clanker replies
 app.post("/api/clanker-reply", async (req, res) => {
@@ -44,11 +45,15 @@ app.post("/api/clanker-reply", async (req, res) => {
     });
 
     const data = await groqRes.json();
-    const reply =
-      data?.choices?.[0]?.message?.content ||
-      data?.choices?.[0]?.text ||
-      data?.error?.message ||
-      "No reply from Groq.";
+
+    let reply = "No reply from Groq.";
+    if (data?.choices?.[0]?.message?.content) {
+      reply = data.choices[0].message.content;
+    } else if (data?.choices?.[0]?.text) {
+      reply = data.choices[0].text;
+    } else if (data?.error?.message) {
+      reply = `Groq error: ${data.error.message}`;
+    }
 
     res.json({ reply });
   } catch (err) {
@@ -57,11 +62,10 @@ app.post("/api/clanker-reply", async (req, res) => {
   }
 });
 
-// Fallback for React Router
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
+// Fallback for React Router (SPA)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, frontendFolder, "index.html"));
 });
-
 
 // Start server
 app.listen(PORT, () => {
