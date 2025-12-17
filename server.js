@@ -54,10 +54,11 @@ app.post("/api/clanker-reply", async (req, res) => {
   }
 });
 
-// SPA fallback
-app.get("*", (req, res) => {
+// SPA fallback (Express 5 safe)
+app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, frontendFolder, "index.html"));
 });
+
 
 app.listen(PORT, () => {
   console.log(`Clanker rattling on port ${PORT}`);
